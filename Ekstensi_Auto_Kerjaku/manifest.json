@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Fill Kerjaku",
+  "version": "1.0",
+  "author": "Wawan Siswanto",
+  "description": "Bot Otomatis mengisi form aktivitas Kerjaku Indramayu",
+  "icons": {
+    "16": "icon_16.png",
+    "48": "icon_48.png",
+    "128": "icon_128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon_16.png",
+      "48": "icon_48.png",
+      "128": "icon_128.png"
+    },
+    "default_title": "Auto Fill Kerjaku"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://kerjaku.indramayukab.go.id/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ]
+}
