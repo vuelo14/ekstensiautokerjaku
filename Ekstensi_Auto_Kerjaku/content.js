@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Auto Fill Kerjaku Indramayu
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Otomatis mengisi form aktivitas dari data copy-paste Excel (TSV)
 // @author       Wawan Siswanto
 // @match        https://kerjaku.indramayukab.go.id/*
