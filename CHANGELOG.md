@@ -2,6 +2,20 @@
 
 Semua perubahan yang signifikan pada proyek Ekstensi Auto Fill Kerjaku akan didokumentasikan di file ini.
 
+## [2.0] - 2026-09-17 (AI Gemini Edition)
+
+### Ditambahkan (Added)
+- **Integrasi Google Gemini AI**: Menghasilkan jadwal aktivitas harian secara otomatis berbasis AI dari instruksi prompt bebas tanpa perlu membuka Excel.
+- **Penyimpanan API Key Otomatis**: Input API Key tersimpan secara lokal dan aman di browser (`chrome.storage.local` / `localStorage`) dengan fitur Show/Hide password.
+- **Dukungan Multi-Model dengan Auto-Fallback**: Mendukung pemilihan model Gemini (`gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-1.5-pro`) dan otomatis berganti ke model cadangan jika kuota limit atau terjadi error.
+- **Pilihan 1 Hari & Rentang Hari**: Opsi generate aktivitas harian atau sekaligus rentang beberapa hari kerja (otomatis melewati hari Sabtu & Minggu).
+- **Aturan Jeda 1 Menit (Anti-Overlap)**: Jam aktivitas dipartisi proporsional dengan jeda tepat 1 menit antar aktivitas dan dukungan waktu istirahat (12:00 - 13:00) agar tidak ada waktu yang bertabrakan.
+- **Auto-Lookup Database Kerjaku (`/Aktivitas/search`)**: Otomatis mencocokkan nama kegiatan ke endpoint server Kerjaku untuk mendapatkan `bk_id`, nama aktivitas resmi, dan `output_stn` secara dinamis.
+- **Pratinjau (Preview) Interaktif**: Menampilkan daftar kartu aktivitas hasil AI lengkap dengan badge jam, tanggal, bk_id, catatan, dan tombol hapus per baris sebelum disubmit.
+- **Tab Switcher**: Mempertahankan Mode Excel (TSV) manual sehingga pengguna tetap fleksibel memilih metode pengisian.
+
+---
+
 ## [1.1] - 2026-05-03
 
 ### Ditambahkan (Added)
