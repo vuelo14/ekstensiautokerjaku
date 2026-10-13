@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Auto Fill Kerjaku Indramayu bertenaga AI Gemini
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Otomatis mengisi form aktivitas Kerjaku Indramayu menggunakan Google Gemini AI atau copy-paste Excel (TSV)
 // @author       Wawan Siswanto
 // @match        https://kerjaku.indramayukab.go.id/*
@@ -108,7 +108,7 @@
                 Auto Fill Kerjaku
             </h3>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 6px; font-size: 10px; color: white; font-weight: 700; letter-spacing: 0.5px;">v2.0 AI</span>
+                <span style="background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 6px; font-size: 10px; color: white; font-weight: 700; letter-spacing: 0.5px;">v2.1 AI</span>
                 <button id="tm-btn-close" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Sembunyikan Panel (Ctrl+Q)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -155,9 +155,10 @@
                     </div>
                     <select id="tm-select-model" style="width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 11px; background: white; outline: none;">
                         <option value="gemini-3.5-flash" selected>gemini-3.5-flash (Default - Rekomendasi)</option>
+                        <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Super Ringan & Cepat)</option>
                         <option value="gemini-3.6-flash">gemini-3.6-flash</option>
                         <option value="gemini-3.7-flash">gemini-3.7-flash</option>
-                        <option value="gemini-3.5-pro">gemini-3.5-pro (Penalaran Kompleks)</option>
+                        <option value="gemini-3.8-flash">gemini-3.8-flash (Terbaru)</option>
                     </select>
                     <div style="font-size: 10px; color: #6b7280; margin-top: 3px;">
                         Jika model pertama limit kuota atau gagal, bot otomatis mencoba model fallback berikutnya.
@@ -396,7 +397,7 @@
             document.getElementById('tm-api-key').value = data.gemini_api_key;
             document.getElementById('tm-key-saved-badge').style.display = 'inline';
         }
-        if (data.gemini_model && !data.gemini_model.includes('gemini-1') && !data.gemini_model.includes('gemini-2')) {
+        if (data.gemini_model && !data.gemini_model.includes('gemini-1') && !data.gemini_model.includes('gemini-2') && !data.gemini_model.includes('pro')) {
             document.getElementById('tm-select-model').value = data.gemini_model;
         } else {
             document.getElementById('tm-select-model').value = 'gemini-3.5-flash';
@@ -721,13 +722,14 @@
 
     // --- Panggilan API Gemini dengan Mekanisme Multi-Model Fallback ---
     async function callGeminiWithFallback(apiKey, prompt, preferredModel) {
-        // Model fallback berurutan sesuai ketersediaan (khusus v3.5 ke atas)
+        // Model fallback berurutan sesuai ketersediaan (khusus seri flash v3.5 ke atas)
         const modelList = [
             preferredModel,
             'gemini-3.5-flash',
+            'gemini-3.5-flash-lite',
             'gemini-3.6-flash',
             'gemini-3.7-flash',
-            'gemini-3.5-pro'
+            'gemini-3.8-flash'
         ];
         const uniqueModels = [...new Set(modelList.filter(Boolean))];
 

@@ -2,6 +2,15 @@
 
 Semua perubahan yang signifikan pada proyek Ekstensi Auto Fill Kerjaku akan didokumentasikan di file ini.
 
+## [2.1] - 2026-10-13
+
+### Diubah (Changed)
+- **Pembaruan Model AI**: Menghapus opsi model Gemini Pro dan memperbarui daftar model agar fokus pada seri Flash berkecepatan tinggi: `gemini-3.5-flash` (Default), `gemini-3.5-flash-lite` (Super Ringan & Cepat), `gemini-3.6-flash`, `gemini-3.7-flash`, dan `gemini-3.8-flash`.
+- **Rantai Fallback Lebih Efisien**: Jalur *auto-fallback* kini mencakup seri Flash dan Flash-Lite v3.5 hingga v3.8 untuk kecepatan generate maksimal dan kehematan kuota.
+- **Auto-Reset Cache Model**: Penyimpanan lokal otomatis membersihkan konfigurasi model pro lama jika sebelumnya sempat tersimpan.
+
+---
+
 ## [2.0] - 2026-09-17 (AI Gemini Edition)
 
 ### Ditambahkan (Added)
