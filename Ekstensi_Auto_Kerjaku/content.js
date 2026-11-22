@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Auto Fill Kerjaku Indramayu bertenaga AI Gemini
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  Otomatis mengisi form aktivitas Kerjaku Indramayu menggunakan Google Gemini AI atau copy-paste Excel (TSV)
 // @author       Wawan Siswanto
 // @match        https://kerjaku.indramayukab.go.id/*
@@ -108,7 +108,7 @@
                 Auto Fill Kerjaku
             </h3>
             <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 6px; font-size: 10px; color: white; font-weight: 700; letter-spacing: 0.5px;">v2.1 AI</span>
+                <span style="background: rgba(255,255,255,0.25); padding: 2px 7px; border-radius: 6px; font-size: 10px; color: white; font-weight: 700; letter-spacing: 0.5px;">v2.2 AI</span>
                 <button id="tm-btn-close" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;" title="Sembunyikan Panel (Ctrl+Q)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
@@ -289,6 +289,23 @@
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between;">
                 <label style="font-weight: 600; color: #4b5563; font-size: 11px;">JEDA FORM / ANTI-BAN (DETIK):</label>
                 <input type="number" id="tm-delay" value="2" step="0.5" min="0.5" style="width: 70px; box-sizing: border-box; padding: 4px 6px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 11px; text-align: center; background: white;">
+            </div>
+
+            <!-- Toggle Kolom Rincian Aktivitas pada Tabel Web -->
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: space-between;">
+                <label for="tm-toggle-rincian-col" style="font-weight: 600; color: #4b5563; font-size: 11px; cursor: pointer;">TAMPILKAN KOLOM RINCIAN DI TABEL:</label>
+                <input type="checkbox" id="tm-toggle-rincian-col" checked style="cursor: pointer; width: 15px; height: 15px; accent-color: #4f46e5;">
+            </div>
+
+            <!-- Auto Click Semua Checkbox di Halaman -->
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #e5e7eb; display: flex; gap: 6px;">
+                <button id="tm-btn-check-all" type="button" style="flex: 1; padding: 8px 10px; background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; border: none; cursor: pointer; font-weight: 600; border-radius: 8px; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Auto Click Checkbox
+                </button>
+                <button id="tm-btn-uncheck-all" type="button" style="padding: 8px 10px; background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; cursor: pointer; font-weight: 600; border-radius: 8px; font-size: 11px; display: flex; align-items: center; justify-content: center;" title="Hilangkan semua ceklis di halaman">
+                    Batal
+                </button>
             </div>
 
             <!-- Status Box -->
@@ -1164,5 +1181,339 @@ DESKRIPSI TUGAS DARI PENGGUNA:
 
         executeAutoFill(parsedItems, btnStartManual, btnStopManual);
     });
+
+    // =========================================================================
+    // --- MODIFIKASI TAMPILAN TABEL WEB KERJAKU: KOLOM RINCIAN AKTIVITAS ---
+    // =========================================================================
+    const TARGET_TABLE_SELECTOR = 'table#tbl-list, table#tbl-data';
+    let showRincianColumn = true;
+    let isUpdatingTable = false;
+    let tableUpdateTimer = null;
+
+    // Injeksi CSS untuk kolom Rincian Aktivitas (Split 2 kolom tanpa mengubah jumlah kolom DataTables)
+    if (!document.getElementById('tm-kerjaku-table-style')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'tm-kerjaku-table-style';
+        styleEl.textContent = `
+            table.tm-rincian-active th.tm-split-cell,
+            table.tm-rincian-active td.tm-split-cell {
+                position: relative;
+                padding: 0 !important;
+                min-width: 380px;
+            }
+            table.tm-rincian-active th.tm-split-cell::before,
+            table.tm-rincian-active td.tm-split-cell::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 42%;
+                width: 1px;
+                background-color: #ddd;
+                pointer-events: none;
+            }
+            table.tm-rincian-active .tm-split-wrap {
+                display: flex;
+                align-items: stretch;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            table.tm-rincian-active .tm-split-left {
+                flex: 0 0 42%;
+                width: 42%;
+                box-sizing: border-box;
+                padding: 6px 8px;
+                white-space: normal;
+                word-wrap: break-word;
+            }
+            table.tm-rincian-active .tm-split-right {
+                flex: 0 0 58%;
+                width: 58%;
+                box-sizing: border-box;
+                padding: 6px 10px;
+                white-space: normal;
+                word-wrap: break-word;
+                line-height: 1.45;
+                font-size: 12px;
+                color: #1f2937;
+                text-align: left;
+            }
+            table.tm-rincian-active th.tm-split-cell .tm-split-left,
+            table.tm-rincian-active th.tm-split-cell .tm-split-right {
+                text-align: center;
+                font-weight: bold;
+                color: inherit;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            table.tm-rincian-active th.tm-split-cell .tm-split-right {
+                padding-right: 22px;
+            }
+            table.tm-rincian-active .tm-rincian-hidden-icon {
+                display: none !important;
+            }
+            table.tm-rincian-active .tm-rincian-expanded {
+                width: 100% !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+
+    function getAktivitasColumnIndex(theadRow) {
+        if (!theadRow) return -1;
+        const cells = Array.from(theadRow.children);
+        for (let i = 0; i < cells.length; i++) {
+            const text = (cells[i].textContent || '').trim().toLowerCase();
+            if (text === 'aktivitas' || text.includes('aktivitas')) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function restoreActivityTable(table) {
+        if (!table) return;
+        table.classList.remove('tm-rincian-active');
+
+        // Kembalikan header Aktivitas ke semula
+        table.querySelectorAll('thead th.tm-split-cell').forEach(th => {
+            if (th.dataset.tmOrigText !== undefined) {
+                th.textContent = th.dataset.tmOrigText;
+                delete th.dataset.tmOrigText;
+            }
+            th.classList.remove('tm-split-cell');
+        });
+
+        // Kembalikan isi sel Aktivitas ke semula
+        table.querySelectorAll('tbody td.tm-split-cell').forEach(td => {
+            const wrap = td.querySelector(':scope > .tm-split-wrap');
+            if (wrap) {
+                const left = wrap.querySelector(':scope > .tm-split-left');
+                if (left) {
+                    while (left.firstChild) {
+                        td.insertBefore(left.firstChild, wrap);
+                    }
+                }
+                wrap.remove();
+            }
+            td.classList.remove('tm-split-cell');
+        });
+
+        // Kembalikan ikon tooltip dan lebar div
+        table.querySelectorAll('.tm-rincian-hidden-icon').forEach(el => el.classList.remove('tm-rincian-hidden-icon'));
+        table.querySelectorAll('.tm-rincian-expanded').forEach(el => el.classList.remove('tm-rincian-expanded'));
+    }
+
+    function enhanceSingleTable(table) {
+        const theadRow = table.querySelector('thead tr');
+        const aktivitasIdx = getAktivitasColumnIndex(theadRow);
+        if (aktivitasIdx === -1) return;
+
+        if (!showRincianColumn) {
+            restoreActivityTable(table);
+            return;
+        }
+
+        table.classList.add('tm-rincian-active');
+
+        // 1. Split Header Kolom "Aktivitas" menjadi "Aktivitas | Rincian Aktivitas" (tetap 1 <th> agar DataTables tidak error)
+        const aktivitasTh = theadRow.children[aktivitasIdx];
+        if (aktivitasTh && !aktivitasTh.querySelector(':scope > .tm-split-wrap')) {
+            const origText = (aktivitasTh.textContent || 'Aktivitas').trim();
+            aktivitasTh.dataset.tmOrigText = origText;
+            aktivitasTh.classList.add('tm-split-cell');
+            aktivitasTh.innerHTML = `
+                <div class="tm-split-wrap">
+                    <div class="tm-split-left">${origText}</div>
+                    <div class="tm-split-right">Rincian Aktivitas</div>
+                </div>
+            `;
+        }
+
+        // 2. Proses setiap baris di <tbody> (tetap mempertahankan jumlah <td> asli DataTables)
+        const tbodyRows = table.querySelectorAll('tbody tr');
+        tbodyRows.forEach(tr => {
+            // Abaikan baris kosong DataTables (colspan)
+            if (tr.children.length === 1 && tr.children[0].hasAttribute('colspan')) {
+                return;
+            }
+
+            const aktivitasTd = tr.children[aktivitasIdx];
+            if (!aktivitasTd) return;
+
+            // Cari khusus tooltip rincian (ikon fa-pencil-square), abaikan ikon file dokumen (data-file)
+            const pencilIcon = aktivitasTd.querySelector('a[data-toggle="tooltip"] i.fa-pencil-square');
+            const tooltipLink = pencilIcon
+                ? pencilIcon.closest('a[data-toggle="tooltip"]')
+                : aktivitasTd.querySelector('a[data-toggle="tooltip"]:not([data-file])');
+
+            const detailText = tooltipLink
+                ? (tooltipLink.getAttribute('data-original-title') || tooltipLink.getAttribute('title') || '').trim()
+                : '';
+
+            // Sembunyikan ikon tooltip rincian; hanya lebarkan .col-sm-10 jika tidak ada ikon lain (mis. dokumen)
+            if (tooltipLink) {
+                const parentDiv = tooltipLink.parentElement;
+                const onlyHasThisIcon = parentDiv && parentDiv.classList.contains('col-sm-2') && parentDiv.children.length === 1;
+                if (onlyHasThisIcon) {
+                    parentDiv.classList.add('tm-rincian-hidden-icon');
+                    const textDiv = aktivitasTd.querySelector('.col-sm-10');
+                    if (textDiv) {
+                        textDiv.classList.add('tm-rincian-expanded');
+                    }
+                } else {
+                    tooltipLink.classList.add('tm-rincian-hidden-icon');
+                }
+            }
+
+            // Split sel Aktivitas menjadi kiri (Aktivitas) dan kanan (Rincian Aktivitas)
+            let wrap = aktivitasTd.querySelector(':scope > .tm-split-wrap');
+            if (!wrap) {
+                wrap = document.createElement('div');
+                wrap.className = 'tm-split-wrap';
+
+                const leftDiv = document.createElement('div');
+                leftDiv.className = 'tm-split-left';
+                while (aktivitasTd.firstChild) {
+                    leftDiv.appendChild(aktivitasTd.firstChild);
+                }
+
+                const rightDiv = document.createElement('div');
+                rightDiv.className = 'tm-split-right';
+                rightDiv.textContent = detailText || '-';
+
+                wrap.appendChild(leftDiv);
+                wrap.appendChild(rightDiv);
+                aktivitasTd.appendChild(wrap);
+                aktivitasTd.classList.add('tm-split-cell');
+            } else {
+                const rightDiv = wrap.querySelector(':scope > .tm-split-right');
+                if (rightDiv && detailText && rightDiv.textContent !== detailText) {
+                    rightDiv.textContent = detailText;
+                }
+            }
+        });
+    }
+
+    function enhanceActivityTable() {
+        if (isUpdatingTable) return;
+        const tables = document.querySelectorAll(TARGET_TABLE_SELECTOR);
+        if (tables.length === 0) return;
+
+        isUpdatingTable = true;
+        try {
+            tables.forEach(table => enhanceSingleTable(table));
+        } finally {
+            isUpdatingTable = false;
+        }
+    }
+
+    function scheduleTableEnhance() {
+        if (isUpdatingTable) return;
+        if (tableUpdateTimer) clearTimeout(tableUpdateTimer);
+        tableUpdateTimer = setTimeout(() => {
+            enhanceActivityTable();
+        }, 50);
+    }
+
+    // Sinkronkan preferensi checkbox toggle kolom rincian
+    const toggleRincianCheckbox = document.getElementById('tm-toggle-rincian-col');
+    storage.get(['show_rincian_column']).then((data) => {
+        if (data.show_rincian_column !== undefined && data.show_rincian_column !== null) {
+            showRincianColumn = data.show_rincian_column === true || data.show_rincian_column === 'true';
+        } else {
+            showRincianColumn = true;
+        }
+        if (toggleRincianCheckbox) {
+            toggleRincianCheckbox.checked = showRincianColumn;
+        }
+        enhanceActivityTable();
+    });
+
+    if (toggleRincianCheckbox) {
+        toggleRincianCheckbox.addEventListener('change', (e) => {
+            showRincianColumn = e.target.checked;
+            storage.set({ show_rincian_column: showRincianColumn });
+            enhanceActivityTable();
+        });
+    }
+
+    // Pantau perubahan DOM (pagination, search, sorting, reload AJAX DataTables)
+    const tableObserver = new MutationObserver((mutations) => {
+        if (isUpdatingTable) return;
+        const hasRelevantChange = mutations.some(m => {
+            const target = m.target;
+            if (!target || target === panel || (panel && panel.contains(target))) return false;
+            return true;
+        });
+        if (hasRelevantChange && document.querySelector(TARGET_TABLE_SELECTOR)) {
+            scheduleTableEnhance();
+        }
+    });
+
+    tableObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+    // Jalankan sekali lagi setelah jeda singkat untuk menangkap inisialisasi DataTables/Bootstrap Tooltip
+    setTimeout(enhanceActivityTable, 600);
+
+    // =========================================================================
+    // --- FITUR AUTO CLICK CHECKBOX DI HALAMAN ---
+    // =========================================================================
+    function toggleAllPageCheckboxes(shouldCheck) {
+        const allCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+        const pageCheckboxes = allCheckboxes.filter(cb => {
+            // Abaikan checkbox milik panel ekstensi sendiri
+            if (panel && panel.contains(cb)) return false;
+            // Abaikan checkbox yang nonaktif
+            if (cb.disabled) return false;
+            // Abaikan checkbox yang berada di dalam elemen tersembunyi (display: none)
+            const style = window.getComputedStyle(cb);
+            if (style.display === 'none' || style.visibility === 'hidden') return false;
+            if (cb.offsetParent === null && style.position !== 'fixed') return false;
+            return true;
+        });
+
+        if (pageCheckboxes.length === 0) {
+            updateStatus('Tidak ada checkbox aktif yang ditemukan di halaman ini.', 'normal');
+            return;
+        }
+
+        let changedCount = 0;
+        pageCheckboxes.forEach(cb => {
+            if (cb.checked !== shouldCheck) {
+                cb.click();
+                // Fallback jika handler halaman tidak mengubah properti checked
+                if (cb.checked !== shouldCheck) {
+                    cb.checked = shouldCheck;
+                    cb.dispatchEvent(new Event('input', { bubbles: true }));
+                    cb.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                changedCount++;
+            }
+        });
+
+        const totalChecked = pageCheckboxes.filter(cb => cb.checked).length;
+        if (shouldCheck) {
+            updateStatus(`Berhasil menceklis <strong>${changedCount} checkbox</strong> (Total terceklis: <strong>${totalChecked}/${pageCheckboxes.length}</strong>).`, 'success');
+        } else {
+            updateStatus(`Berhasil membatalkan <strong>${changedCount} checkbox</strong> (Total terceklis: <strong>${totalChecked}/${pageCheckboxes.length}</strong>).`, 'normal');
+        }
+    }
+
+    const btnCheckAll = document.getElementById('tm-btn-check-all');
+    const btnUncheckAll = document.getElementById('tm-btn-uncheck-all');
+
+    if (btnCheckAll) {
+        btnCheckAll.addEventListener('click', () => toggleAllPageCheckboxes(true));
+    }
+    if (btnUncheckAll) {
+        btnUncheckAll.addEventListener('click', () => toggleAllPageCheckboxes(false));
+    }
 
 })();

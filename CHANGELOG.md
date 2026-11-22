@@ -2,6 +2,17 @@
 
 Semua perubahan yang signifikan pada proyek Ekstensi Auto Fill Kerjaku akan didokumentasikan di file ini.
 
+## [2.2] - 2026-11-22
+
+### Ditambahkan (Added)
+- **Kolom Rincian Aktivitas pada Tabel Web Kerjaku**: Menampilkan teks rincian aktivitas (dari tooltip ikon `fa-pencil-square`) langsung di kolom terpisah **`Rincian Aktivitas`** di sebelah kolom `Aktivitas`, baik pada halaman **Aktivitas** (`#tbl-list`) maupun halaman **Penilaian Aktivitas** (`#tbl-data`).
+- **Kompatibilitas Penuh DataTables**: Menggunakan teknik *split* visual 2 kolom di dalam sel `Aktivitas` agar struktur jumlah kolom HTML tetap utuh dan bebas dari error/warning DataTables (`Requested unknown parameter`) saat reload AJAX, sorting, pencarian, maupun pagination.
+- **Pelestarian Ikon Lampiran Dokumen**: Tetap mempertahankan tombol/ikon **Lihat Dokumen Aktivitas** (`fa-file`) pada baris yang memiliki dokumen lampiran (seperti aktivitas WFH).
+- **Toggle Tampilan Kolom Rincian**: Menambahkan opsi checkbox **`TAMPILKAN KOLOM RINCIAN DI TABEL`** pada panel ekstensi (aktif secara default dan tersimpan di storage browser) untuk beralih antara tampilan kolom rincian dan tampilan asli tabel.
+- **Auto Click Checkbox Halaman**: Menambahkan tombol **`Auto Click Checkbox`** dan **`Batal`** pada panel ekstensi untuk menceklis atau membatalkan seluruh checkbox aktif yang terlihat di halaman web secara otomatis tanpa mengganggu checkbox milik panel ekstensi.
+
+---
+
 ## [2.1] - 2026-10-13
 
 ### Diubah (Changed)
